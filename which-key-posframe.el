@@ -118,16 +118,28 @@ Argument ACT-POPUP-DIM includes the dimension, (height . width)
 of the buffer text to be displayed in the popup"
   (when (posframe-workable-p)
     (posframe-show which-key--buffer
-		   :font which-key-posframe-font
-		   :position (point)
-		   :poshandler which-key-posframe-poshandler
-		   :background-color (face-attribute 'which-key-posframe :background nil t)
-		   :foreground-color (face-attribute 'which-key-posframe :foreground nil t)
-		   :height (car act-popup-dim)
-		   :width (cdr act-popup-dim)
-		   :internal-border-width which-key-posframe-border-width
-		   :internal-border-color (face-attribute 'which-key-posframe-border :background nil t)
-		   :override-parameters which-key-posframe-parameters)))
+                   :font which-key-posframe-font
+                   :position (point)
+                   :poshandler which-key-posframe-poshandler
+                   :background-color (face-attribute 'which-key-posframe :background nil t)
+                   :foreground-color (face-attribute 'which-key-posframe :foreground nil t)
+                   :height (car act-popup-dim)
+                   :width (cdr act-popup-dim)
+                   :internal-border-width which-key-posframe-border-width
+                   :internal-border-color (face-attribute 'which-key-posframe-border :background nil t)
+                   :override-parameters which-key-posframe-parameters)
+    (which-key-posframe--add-prompt)))
+
+(defun which-key-posframe--add-prompt ()
+  "Add the which-key prompt to th which-key buffer."
+  (when (and (display-graphic-p))
+    (with-current-buffer (window-buffer (active-minibuffer-window))
+      (let ((prompt (buffer-string)))
+        (remove-text-properties 0 (length prompt) '(read-only nil) prompt)
+        (with-current-buffer which-key--buffer
+          (goto-char (point-min))
+          (delete-region (point) (line-beginning-position 2))
+          (insert prompt "  \n"))))))
 
 (defun which-key-posframe--hide ()
   "Hide which-key buffer when posframe popup is used."
@@ -152,24 +164,24 @@ of the buffer text to be displayed in the popup"
   :lighter nil
   (if which-key-posframe-mode
       (progn
-	(setq which-key-popup-type--previous which-key-popup-type
-	      which-key-custom-show-popup-function--previous which-key-custom-show-popup-function
-	      which-key-custom-hide-popup-function--previous which-key-custom-hide-popup-function
-	      which-key-custom-popup-max-dimensions-function--previous which-key-custom-popup-max-dimensions-function
-	      which-key-popup-type 'custom
-	      which-key-custom-show-popup-function 'which-key-posframe--show-buffer
-	      which-key-custom-hide-popup-function 'which-key-posframe--hide
-	      which-key-custom-popup-max-dimensions-function 'which-key-posframe--max-dimensions)
-	(advice-add 'which-key--popup-max-dimensions :override 'which-key-posframe--popup-max-dimensions))
+        (setq which-key-popup-type--previous which-key-popup-type
+              which-key-custom-show-popup-function--previous which-key-custom-show-popup-function
+              which-key-custom-hide-popup-function--previous which-key-custom-hide-popup-function
+              which-key-custom-popup-max-dimensions-function--previous which-key-custom-popup-max-dimensions-function
+              which-key-popup-type 'custom
+              which-key-custom-show-popup-function 'which-key-posframe--show-buffer
+              which-key-custom-hide-popup-function 'which-key-posframe--hide
+              which-key-custom-popup-max-dimensions-function 'which-key-posframe--max-dimensions)
+        (advice-add 'which-key--popup-max-dimensions :override 'which-key-posframe--popup-max-dimensions))
     (posframe-delete which-key--buffer)
     (setq which-key-popup-type which-key-popup-type--previous
-	  which-key-custom-show-popup-function which-key-custom-show-popup-function--previous
-	  which-key-custom-hide-popup-function which-key-custom-hide-popup-function--previous
-	  which-key-custom-popup-max-dimensions-function which-key-custom-popup-max-dimensions-function--previous
-	  which-key-popup-type--previous nil
-	  which-key-custom-show-popup-function--previous nil
-	  which-key-custom-hide-popup-function--previous nil
-	  which-key-custom-popup-max-dimensions-function--previous nil)
+          which-key-custom-show-popup-function which-key-custom-show-popup-function--previous
+          which-key-custom-hide-popup-function which-key-custom-hide-popup-function--previous
+          which-key-custom-popup-max-dimensions-function which-key-custom-popup-max-dimensions-function--previous
+          which-key-popup-type--previous nil
+          which-key-custom-show-popup-function--previous nil
+          which-key-custom-hide-popup-function--previous nil
+          which-key-custom-popup-max-dimensions-function--previous nil)
     (advice-remove 'which-key--popup-max-dimensions #'which-key-posframe--popup-max-dimensions)))
 
 (provide 'which-key-posframe)
